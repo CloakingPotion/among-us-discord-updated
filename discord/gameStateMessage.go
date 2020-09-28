@@ -10,8 +10,51 @@ type GameStateMessage struct {
 	lock    sync.RWMutex
 }
 
+type PrivateStateMessage struct {
+	message *discordgo.Message
+	lock    sync.RWMutex
+}
+
+func (psm PrivateStateMessage) CreateMessage(s *discordgo.Session, me *discordgo.MessageEmbed, channelID string) *discordgo.Message  {
+	psm.lock.Lock()
+	psm.message = sendMessageEmbed(s, channelID, me)
+	psm.lock.Unlock()
+	return psm.message;
+}
+
+func (psm PrivateStateMessage) Exists() bool {
+	psm.lock.RLock()
+	defer psm.lock.RUnlock()
+	return psm.message != nil
+}
+
+func (psm PrivateStateMessage) IsReactionTo(m *discordgo.MessageReactionAdd) bool {
+	psm.lock.RLock()
+	defer psm.lock.RUnlock()
+	if psm.message == nil {
+		return false
+	}
+
+	return m.ChannelID == psm.message.ChannelID && m.MessageID == psm.message.ID && m.UserID != psm.message.Author.ID
+}
+
+func (psm *PrivateStateMessage) AddReaction(s *discordgo.Session, emoji string) {
+	psm.lock.Lock()
+	if psm.message != nil {
+		addReaction(s, psm.message.ChannelID, psm.message.ID, emoji)
+	}
+	psm.lock.Unlock()
+}
+
 func MakeGameStateMessage() GameStateMessage {
 	return GameStateMessage{
+		message: nil,
+		lock:    sync.RWMutex{},
+	}
+}
+
+func MakePrivateStateMessage() PrivateStateMessage {
+	return PrivateStateMessage{
 		message: nil,
 		lock:    sync.RWMutex{},
 	}

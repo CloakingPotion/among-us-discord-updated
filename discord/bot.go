@@ -37,6 +37,8 @@ var SocketUpdateChannels = make(map[string]*chan SocketStatus)
 
 var ChannelsMapLock = sync.RWMutex{}
 
+const privateChannelID = "758394408851734568"; // Currently named private in the server. Planning to change name to bot-commands in the future.
+
 type SocketStatus struct {
 	GuildID   string
 	Connected bool
@@ -336,9 +338,15 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 //this function is called whenever a reaction is created in a guild
 func reactionCreate(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
+
 	for id, socketGuild := range AllGuilds {
 		if id == m.GuildID {
-			socketGuild.handleReactionGameStartAdd(s, m)
+			if socketGuild.GameStateMsg.Exists() && socketGuild.GameStateMsg.IsReactionTo(m) {
+				socketGuild.handleReactionGameStartAdd(s, m)
+			} else if m.ChannelID == privateChannelID {
+				socketGuild.handleReactionPrivateUserMessage(s, m);
+			}
+
 			break
 		}
 	}
@@ -369,6 +377,7 @@ func newGuild(emojiGuildID string) func(s *discordgo.Session, m *discordgo.Guild
 			UserData:     MakeUserDataSet(),
 			Tracking:     MakeTracking(),
 			GameStateMsg: MakeGameStateMessage(),
+			PrivateStateMsg: MakePrivateStateMessage(),
 
 			StatusEmojis:  emptyStatusEmojis(),
 			SpecialEmojis: map[string]Emoji{},
@@ -405,6 +414,7 @@ func newGuild(emojiGuildID string) func(s *discordgo.Session, m *discordgo.Guild
 
 	}
 }
+
 
 func (guild *GuildState) handleMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
@@ -534,8 +544,8 @@ func (guild *GuildState) handleMessageCreate(s *discordgo.Session, m *discordgo.
 					}
 				}
 				//}
-
 				guild.handleGameStartMessage(s, m, room, region, initialTracking)
+				guild.createPrivateMapMessage(s, m, privateChannelID);
 				break
 			case "end":
 				fallthrough

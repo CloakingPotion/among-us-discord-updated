@@ -7,6 +7,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+const voiceChannel = "758127642661748766";
+
 func (guild *GuildState) handleGameEndMessage(s *discordgo.Session) {
 	guild.AmongUsData.SetAllAlive()
 	guild.AmongUsData.SetPhase(game.LOBBY)
@@ -34,10 +36,140 @@ func (guild *GuildState) handleGameStartMessage(s *discordgo.Session, m *discord
 
 	log.Println("Added self game state message")
 
+
+
 	for _, e := range guild.StatusEmojis[true] {
 		guild.GameStateMsg.AddReaction(s, e.FormatForReaction())
 	}
 	guild.GameStateMsg.AddReaction(s, "❌")
+}
+
+func (guild *GuildState) createPrivateMapMessage(s *discordgo.Session, m *discordgo.MessageCreate, p string) {
+
+	// Custom Code:
+	var guildId = m.GuildID;
+	var g, _ = s.State.Guild(guildId)
+
+	var idUsernameMap = make(map[string]string)
+
+	for _, vs := range g.VoiceStates {
+		if (vs.ChannelID != voiceChannel) {
+			continue;
+		}
+		var member, err = s.State.Member(guildId, vs.UserID)
+
+		if (err != nil) {
+			log.Println("Error: " + err.Error());
+			log.Println("Falling back to s.GuildMember implementation");
+			member, _ = s.GuildMember(guildId, vs.UserID);
+		}
+
+		if (member == nil) {
+			log.Print("Member is nil for vs.UserId: " + vs.UserID);
+			continue;
+		}
+
+		var user = member.User
+		var userID = user.ID
+
+		var username = "";
+
+		if member.Nick == "" {
+			// Doesn't have a Nick.
+			username = user.Username;
+		} else {
+			// Does have a nickname. Use nickname for reference
+			username = member.Nick;
+		}
+
+		var targetUsername = idUsernameMap[userID];
+
+		//log.Print("User: " + targetUsername + "|||||");
+		//log.Print("User ID: " + user.ID);
+		if (targetUsername == "") {
+			log.Print("UserID hasn't been saved before: USERID:" + userID + " NAME:" + username);
+			// user hasn't been saved before.
+			//log.Print("User is equal to an empty string!");
+
+			//log.Print("Descriminator: " + member.User.Discriminator);
+
+			//TODO: CHANGE IMPLENTATION TO A MORE OPTIMIZED SOLUTION.
+			//PERHAPS USE A CUSTOM OBJECT FOR THE VALUE TYPE OF THE MAP!
+			//TRY TO MAKE NAME INFORMATION ACCESSIBLE EASILY
+
+			var discriminationNecessary = false;
+
+			for _, uName := range idUsernameMap {
+				if (uName == username) {
+					log.Print("Found a previous user with the same name as current user: " + username);
+					log.Print("Setting discrimination necessary to true");
+					//Came across exact same name. Update all with the same name to also include the discriminator for the name
+					discriminationNecessary = true
+					break;
+				}
+			}
+
+			idUsernameMap[userID] = username;
+
+			if (discriminationNecessary) {
+				log.Print("Determined that discrimination necessary is true");
+				usernameIdCopy := make(map[string]string);
+
+				log.Print("Looking through the map for similar values.");
+				for uID, uName := range idUsernameMap {
+					var value = uName;
+					if (uName == username) {
+						log.Print("Found a similar value...");
+						// Is a duplicate/original of the name. Add descriminator
+						var targetMember, _ = s.State.Member(guildId, uID)
+						value = uName + "#" + targetMember.User.Discriminator;
+						log.Print("Updating name to use discriminator: " + targetMember.User.Discriminator);
+					}
+
+					usernameIdCopy[uID] = value;
+				}
+				log.Print("Finished iteration through map for similar values.");
+
+				idUsernameMap = usernameIdCopy;
+
+				log.Print("Updated map");
+
+
+			}
+		} else {
+			log.Print("User has been saved before: " + user.Username);
+			// User has been saved before
+		}
+	}
+
+	log.Print("Showing Map:")
+	for uID, uName := range idUsernameMap {
+		log.Print(uID + ": " + uName);
+	}
+	log.Print("Map Finished:")
+
+	//var message *discordgo.Message;
+
+	var message *discordgo.Message;
+	for uID, uName := range idUsernameMap {
+		message = guild.PrivateStateMsg.CreateMessage(s, privateMapResponse(uID, uName), p)
+		break;
+	}
+
+	guild.PrivateStateMsg.message = message;
+
+
+	log.Print("printing reactions:")
+
+	for _, e := range guild.StatusEmojis[true] {
+		guild.PrivateStateMsg.AddReaction(s, e.FormatForReaction())
+		log.Print("Printed reaction...")
+	}
+	guild.PrivateStateMsg.AddReaction(s, "❌")
+	log.Print("Reactions printed")
+
+	log.Print("Message id: " + guild.PrivateStateMsg.message.ID);
+	log.Print("Content: " + guild.PrivateStateMsg.message.Content);
 }
 
 // sendMessage provides a single interface to send a message to a channel via discord

@@ -52,6 +52,7 @@ type GuildState struct {
 	Tracking Tracking
 
 	GameStateMsg GameStateMessage
+	PrivateStateMsg PrivateStateMessage
 
 	StatusEmojis  AlivenessEmojis
 	SpecialEmojis map[string]Emoji
@@ -308,15 +309,21 @@ func (guild *GuildState) voiceStateChange(s *discordgo.Session, m *discordgo.Voi
 }
 
 func (guild *GuildState) handleReactionGameStartAdd(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
+	//TODO: Add code here to handle reactions in private chat
+
 	g, err := s.State.Guild(guild.PersistentGuildData.GuildID)
 	if err != nil {
 		log.Println(err)
 	}
 
+
 	if guild.GameStateMsg.Exists() {
 
 		//verify that the user is reacting to the state/status message
 		if guild.GameStateMsg.IsReactionTo(m) {
+
+
+
 			idMatched := false
 			for color, e := range guild.StatusEmojis[true] {
 				if e.ID == m.Emoji.ID {
@@ -347,7 +354,7 @@ func (guild *GuildState) handleReactionGameStartAdd(s *discordgo.Session, m *dis
 			if !idMatched {
 				//log.Println(m.Emoji.Name)
 				if m.Emoji.Name == "❌" {
-					log.Printf("Removing player %s", m.UserID)
+					log.Printf("REACTIONGAMESTART Removing player %s", m.UserID)
 					guild.UserData.ClearPlayerData(m.UserID)
 					err := s.MessageReactionRemove(m.ChannelID, m.MessageID, "❌", m.UserID)
 					if err != nil {
@@ -361,9 +368,72 @@ func (guild *GuildState) handleReactionGameStartAdd(s *discordgo.Session, m *dis
 				guild.handleTrackedMembers(s, 0, NoPriority)
 				guild.GameStateMsg.Edit(s, gameStateResponse(guild))
 			}
+
 		}
 	}
 
+}
+
+func (guild *GuildState) handleReactionPrivateUserMessage(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
+
+	//TODO: Add code here to handle reactions in private chat
+
+	g, err := s.State.Guild(guild.PersistentGuildData.GuildID)
+	if err != nil {
+		log.Println(err)
+	}
+
+	if !guild.PrivateStateMsg.Exists() || !guild.PrivateStateMsg.IsReactionTo(m){
+		return
+	}
+
+	log.Printf("Registered reaction in private user message!", g.ID);
+
+
+	idMatched := false
+	for _, e := range guild.StatusEmojis[true] {
+		if e.ID == m.Emoji.ID {
+			idMatched = true
+			//log.Printf("Player %s reacted with color %s", m.UserID, game.GetColorStringForInt(color))
+			////the user doesn't exist in our userdata cache; add them
+			//
+			//_, added := guild.checkCacheAndAddUser(g, s, m.UserID)
+			//if !added {
+			//	log.Println("No users found in Discord for userID " + m.UserID)
+			//}
+			//
+			//playerData := guild.AmongUsData.GetByColor(game.GetColorStringForInt(color))
+			//if playerData != nil {
+			//	guild.UserData.UpdatePlayerData(m.UserID, playerData)
+			//} else {
+			//	log.Println("I couldn't find any player data for that color; is your capture linked?")
+			//}
+
+			//then remove the player's reaction if we matched, or if we didn't
+			err := s.MessageReactionRemove(m.ChannelID, m.MessageID, e.FormatForReaction(), m.UserID)
+			if err != nil {
+				log.Println(err)
+			}
+			break
+		}
+	}
+	if !idMatched {
+		//log.Println(m.Emoji.Name)
+		if m.Emoji.Name == "❌" {
+			log.Printf("REACTIONPRIVATE Removing player %s", m.UserID)
+			guild.UserData.ClearPlayerData(m.UserID)
+			err := s.MessageReactionRemove(m.ChannelID, m.MessageID, "❌", m.UserID)
+			if err != nil {
+				log.Println(err)
+			}
+			idMatched = true
+		}
+	}
+	////make sure to update any voice changes if they occurred
+	//if idMatched {
+	//	guild.handleTrackedMembers(s, 0, NoPriority)
+	//	guild.GameStateMsg.Edit(s, gameStateResponse(guild))
+	//}
 }
 
 // ToString returns a simple string representation of the current state of the guild

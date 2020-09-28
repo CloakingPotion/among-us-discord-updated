@@ -85,6 +85,47 @@ func gameStateResponse(guild *GuildState) *discordgo.MessageEmbed {
 	return messages[guild.AmongUsData.GetPhase()](guild)
 }
 
+func privateMapResponse(uID string, uName string) *discordgo.MessageEmbed {
+
+
+	gameInfoFields := make([]*discordgo.MessageEmbedField, 2)
+	gameInfoFields[0] = &discordgo.MessageEmbedField{
+		Name:   "User ID",
+		Value:  uID,
+		Inline: false,
+	}
+	gameInfoFields[1] = &discordgo.MessageEmbedField{
+		Name: "Username",
+		Value: uName,
+		Inline: false,
+	}
+
+
+
+
+
+	msg := discordgo.MessageEmbed{
+		URL:         "",
+		Type:        "",
+		Title:       "What color is " + uName + "?",
+			Description: "",
+		Timestamp:   "",
+		Footer: &discordgo.MessageEmbedFooter{
+			Text:         "React to this message with " + uName + "'s color! (or ❌ to skip)",
+			IconURL:      "",
+			ProxyIconURL: "",
+		},
+		Color:     3066993, //GREEN
+		Image:     nil,
+		Thumbnail: nil,
+		Video:     nil,
+		Provider:  nil,
+		Author:    nil,
+		Fields:    gameInfoFields,
+	}
+	return &msg
+}
+
 //func padToLength(input string, length int) string {
 //	diff := length - len(input)
 //	if diff > 0 {

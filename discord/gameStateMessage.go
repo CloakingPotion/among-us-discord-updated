@@ -103,7 +103,8 @@ func MakePrivateStateMessage() PrivateStateMessage {
 		lock:    sync.RWMutex{},
 		idUsernameMap: make(map[string]string),
 		printedUsers: make([]string, 0),
-		privateChannelID: "758394408851734568",
+		//privateChannelID: "758394408851734568",
+		privateChannelID: "760606092643270679",
 	}
 }
 

@@ -53,5 +53,5 @@
             }
         }
     },
-    "applyNicknames": false
+    "applyNicknames": true
 }

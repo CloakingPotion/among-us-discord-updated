@@ -1,0 +1,6 @@
+2020/09/30 02:05:01 2.2.0-Prerelease
+2020/09/30 02:05:01 Invalid or no particular SERVER_PORT provided. Defaulting to 8123
+2020/09/30 02:05:01 Bot is now running.  Press CTRL-C to exit.
+2020/09/30 02:05:01 Serving at localhost:8123...
+2020/09/30 02:05:01 Added to new Guild, id 756704785977311302, name Among Us
+2020/09/30 02:05:01 No explicit guildID provided for emojis; using the current guild default

@@ -37,7 +37,8 @@ var SocketUpdateChannels = make(map[string]*chan SocketStatus)
 
 var ChannelsMapLock = sync.RWMutex{}
 
-const privateChannelID = "758394408851734568"; // Currently named private in the server. Planning to change name to bot-commands in the future.
+//const privateChannelID = "758394408851734568"; // Currently named private in the server. Planning to change name to bot-commands in the future. Cloaking's Server
+const privateChannelID = "760606092643270679";
 
 type SocketStatus struct {
 	GuildID   string
@@ -545,7 +546,8 @@ func (guild *GuildState) handleMessageCreate(s *discordgo.Session, m *discordgo.
 				}
 				//}
 				guild.handleGameStartMessage(s, m, room, region, initialTracking)
-				guild.createPrivateMapMessage(s, m, privateChannelID);
+				guild.createPrivateMapMessage(s, m);
+
 				break
 			case "end":
 				fallthrough
@@ -554,9 +556,12 @@ func (guild *GuildState) handleMessageCreate(s *discordgo.Session, m *discordgo.
 			case "endgame":
 				guild.handleGameEndMessage(s)
 
+				var pMessage = guild.PrivateStateMsg.message;
+
 				//have to explicitly delete here, because if we use the default delete below, the channelID
 				//for the game state message doesn't exist anymore...
 				deleteMessage(s, m.ChannelID, m.Message.ID)
+				deleteMessage(s, pMessage.ChannelID, pMessage.ID);
 				break
 			case "force":
 				fallthrough

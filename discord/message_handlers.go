@@ -7,7 +7,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-const voiceChannel = "758127642661748766";
+//const voiceChannel = "758127642661748766"; // Cloaking's Server VoiceChannel
+const voiceChannel = "758099224838668299";
 
 func (guild *GuildState) handleGameEndMessage(s *discordgo.Session) {
 	guild.AmongUsData.SetAllAlive()
@@ -35,22 +36,15 @@ func (guild *GuildState) handleGameStartMessage(s *discordgo.Session, m *discord
 	guild.GameStateMsg.CreateMessage(s, gameStateResponse(guild), m.ChannelID)
 
 	log.Println("Added self game state message")
-
-
-
-	for _, e := range guild.StatusEmojis[true] {
-		guild.GameStateMsg.AddReaction(s, e.FormatForReaction())
-	}
-	guild.GameStateMsg.AddReaction(s, "❌")
 }
 
-func (guild *GuildState) createPrivateMapMessage(s *discordgo.Session, m *discordgo.MessageCreate, p string) {
+func (guild *GuildState) createPrivateMapMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Custom Code:
 	var guildId = m.GuildID;
 	var g, _ = s.State.Guild(guildId)
 
-	var idUsernameMap = make(map[string]string)
+	var idUsernameMap = make(map[string]string);
 
 	for _, vs := range g.VoiceStates {
 		if (vs.ChannelID != voiceChannel) {
@@ -142,6 +136,8 @@ func (guild *GuildState) createPrivateMapMessage(s *discordgo.Session, m *discor
 		}
 	}
 
+	guild.PrivateStateMsg.idUsernameMap = idUsernameMap;
+
 	log.Print("Showing Map:")
 	for uID, uName := range idUsernameMap {
 		log.Print(uID + ": " + uName);
@@ -152,7 +148,8 @@ func (guild *GuildState) createPrivateMapMessage(s *discordgo.Session, m *discor
 
 	var message *discordgo.Message;
 	for uID, uName := range idUsernameMap {
-		message = guild.PrivateStateMsg.CreateMessage(s, privateMapResponse(uID, uName), p)
+		message = guild.PrivateStateMsg.CreateMessage(s, guild.PrivateStateMsg.privateMapResponse(uID, uName), guild.PrivateStateMsg.privateChannelID)
+		guild.PrivateStateMsg.printedUsers = append(guild.PrivateStateMsg.printedUsers, uID);
 		break;
 	}
 
@@ -167,9 +164,6 @@ func (guild *GuildState) createPrivateMapMessage(s *discordgo.Session, m *discor
 	}
 	guild.PrivateStateMsg.AddReaction(s, "❌")
 	log.Print("Reactions printed")
-
-	log.Print("Message id: " + guild.PrivateStateMsg.message.ID);
-	log.Print("Content: " + guild.PrivateStateMsg.message.Content);
 }
 
 // sendMessage provides a single interface to send a message to a channel via discord

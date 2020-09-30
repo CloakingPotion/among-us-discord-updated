@@ -13,6 +13,9 @@ type GameStateMessage struct {
 type PrivateStateMessage struct {
 	message *discordgo.Message
 	lock    sync.RWMutex
+	idUsernameMap map[string]string
+	printedUsers []string
+	privateChannelID string
 }
 
 func (psm PrivateStateMessage) CreateMessage(s *discordgo.Session, me *discordgo.MessageEmbed, channelID string) *discordgo.Message  {
@@ -46,6 +49,47 @@ func (psm *PrivateStateMessage) AddReaction(s *discordgo.Session, emoji string) 
 	psm.lock.Unlock()
 }
 
+func (psm *PrivateStateMessage) privateMapResponse(uID string, uName string) *discordgo.MessageEmbed {
+
+
+	gameInfoFields := make([]*discordgo.MessageEmbedField, 2)
+	gameInfoFields[0] = &discordgo.MessageEmbedField{
+		Name:   "User ID",
+		Value:  uID,
+		Inline: false,
+	}
+	gameInfoFields[1] = &discordgo.MessageEmbedField{
+		Name: "Username",
+		Value: uName,
+		Inline: false,
+	}
+
+
+
+
+
+	msg := discordgo.MessageEmbed{
+		URL:         "",
+		Type:        "",
+		Title:       "What color is " + uName + "?",
+		Description: "",
+		Timestamp:   "",
+		Footer: &discordgo.MessageEmbedFooter{
+			Text:         "React to this message with " + uName + "'s color! (or ❌ to skip)",
+			IconURL:      "",
+			ProxyIconURL: "",
+		},
+		Color:     3066993, //GREEN
+		Image:     nil,
+		Thumbnail: nil,
+		Video:     nil,
+		Provider:  nil,
+		Author:    nil,
+		Fields:    gameInfoFields,
+	}
+	return &msg
+}
+
 func MakeGameStateMessage() GameStateMessage {
 	return GameStateMessage{
 		message: nil,
@@ -57,6 +101,9 @@ func MakePrivateStateMessage() PrivateStateMessage {
 	return PrivateStateMessage{
 		message: nil,
 		lock:    sync.RWMutex{},
+		idUsernameMap: make(map[string]string),
+		printedUsers: make([]string, 0),
+		privateChannelID: "758394408851734568",
 	}
 }
 

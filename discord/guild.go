@@ -307,7 +307,6 @@ func (guild *GuildState) voiceStateChange(s *discordgo.Session, m *discordgo.Voi
 		guild.GameStateMsg.Edit(s, gameStateResponse(guild))
 	}
 }
-
 func (guild *GuildState) handleReactionGameStartAdd(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 	//TODO: Add code here to handle reactions in private chat
 
@@ -315,6 +314,7 @@ func (guild *GuildState) handleReactionGameStartAdd(s *discordgo.Session, m *dis
 	if err != nil {
 		log.Println(err)
 	}
+
 
 
 	if guild.GameStateMsg.Exists() {
@@ -391,11 +391,11 @@ func (guild *GuildState) handleReactionPrivateUserMessage(s *discordgo.Session, 
 	log.Printf("Registered reaction in private user message!");
 
 
-	log.Print("Printing printedUsers...");
-	for _, printed := range guild.PrivateStateMsg.printedUsers {
-		log.Print("printed: " + printed);
-	}
-	log.Print("END Printing printedUsers...");
+	//log.Print("Printing printedUsers...");
+	//for _, printed := range guild.PrivateStateMsg.printedUsers {
+		//log.Print("printed: " + printed);
+	//}
+	//log.Print("END Printing printedUsers...");
 
 
 	//if (len(guild.PrivateStateMsg.printedUsers) == len(guild.PrivateStateMsg.idUsernameMap)) {
@@ -431,19 +431,27 @@ func (guild *GuildState) handleReactionPrivateUserMessage(s *discordgo.Session, 
 			log.Printf("The react button %s has been pressed", game.GetColorStringForInt(color))
 			//the user doesn't exist in our userdata cache; add them
 
-			log.Print("TargetUserId: " + userId);
-			log.Print("MasterControllerUserId: " + m.UserID);
+			//log.Print("TargetUserId: " + userId);
+			//log.Print("MasterControllerUserId: " + m.UserID);
 
+
+
+			log.Print("Starting checkCacheAndUser method....")
 			_, added := guild.checkCacheAndAddUser(g, s, userId)
 			if !added {
 				log.Println("No users found in Discord for userID " + userId)
 			}
+			log.Print("Finished checkCacheAndUser method!")
 
+			log.Print("Starting getColorById method....")
 			playerData := guild.AmongUsData.GetByColor(game.GetColorStringForInt(color))
+			log.Print("Finished getColorById method!")
 			if playerData != nil {
+				log.Print("Starting UpdatePlayerData....")
 				guild.UserData.UpdatePlayerData(userId, playerData)
+				log.Print("Finished UpdatePlayerData!")
 			} else {
-				log.Println("I couldn't find any player data for that color; is your capture linked?")
+				//log.Println("I couldn't find any player data for that color; is your capture linked?")
 			}
 
 			//then remove the player's reaction if we matched, or if we didn't
@@ -462,23 +470,26 @@ func (guild *GuildState) handleReactionPrivateUserMessage(s *discordgo.Session, 
 	}
 
 	var previousMessage = guild.PrivateStateMsg.message;
-	s.ChannelMessageDelete(previousMessage.ChannelID, previousMessage.ID) // Deletes Message
+
+	// Not delete. Edit instead
+	//s.ChannelMessageDelete(previousMessage.ChannelID, previousMessage.ID) // Deletes Message
 
 	if (len(guild.PrivateStateMsg.printedUsers) == len(guild.PrivateStateMsg.idUsernameMap)) {
+		log.Print("RETURNING!")
+		s.ChannelMessageDelete(previousMessage.ChannelID, previousMessage.ID)
 		return;
 	}
 
 
 	userId = "";
 	var userName string;
-
 	for uId, uName := range idUsernameMap {
 
 
-		log.Print("Showing printedUsers again...")
+		//log.Print("Showing printedUsers again...")
 		var shownUsername = false;
 		for _, username := range printedUsers {
-			log.Print("user: " + username);
+			//log.Print("user: " + username);
 			if username == uId {
 				shownUsername = true;
 			}
@@ -496,33 +507,36 @@ func (guild *GuildState) handleReactionPrivateUserMessage(s *discordgo.Session, 
 		}
 	}
 
-	var newMessage = guild.PrivateStateMsg.CreateMessage(s, guild.PrivateStateMsg.privateMapResponse(userId, userName), guild.PrivateStateMsg.privateChannelID)
 
-	if (newMessage == nil) {
-		log.Print("newMessage is nil!")
-		return;
-	}
+	var newEmbed = guild.PrivateStateMsg.privateMapResponse(userId, userName);
+
+
+	//var newMessage = guild.PrivateStateMsg.CreateMessage(s, , guild.PrivateStateMsg.privateChannelID)
+
+	var editedMessage = editMessageEmbed(s, previousMessage.ChannelID, previousMessage.ID, newEmbed); // Should update the message in private
+
 
 	guild.PrivateStateMsg.printedUsers = append(guild.PrivateStateMsg.printedUsers, userId);
 
 
-	guild.PrivateStateMsg.message = newMessage;
+	guild.PrivateStateMsg.message = editedMessage;
 
 
-	log.Print("printing reactions:")
+	//log.Print("printing reactions:")
 
 	for _, e := range guild.StatusEmojis[true] {
 		guild.PrivateStateMsg.AddReaction(s, e.FormatForReaction())
-		log.Print("Printed reaction...")
+		//log.Print("Printed reaction...")
 	}
 	guild.PrivateStateMsg.AddReaction(s, "❌")
-	log.Print("Reactions printed")
-
-	log.Print("Message id: " + guild.PrivateStateMsg.message.ID);
-	log.Print("Content: " + guild.PrivateStateMsg.message.Content);
+	//log.Print("Reactions printed")
+	//
+	//log.Print("Message id: " + guild.PrivateStateMsg.message.ID);
+	//log.Print("Content: " + guild.PrivateStateMsg.message.Content);
 
 
 	//Create extra message here?
+	log.Print("PRINTED")
 }
 
 // ToString returns a simple string representation of the current state of the guild

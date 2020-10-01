@@ -7,8 +7,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-//const voiceChannel = "758127642661748766"; // Cloaking's Server VoiceChannel
-const voiceChannel = "758099224838668299";
+const voiceChannel = "758127642661748766"; // Cloaking's Server VoiceChannel
+//const voiceChannel = "758099224838668299";
 
 func (guild *GuildState) handleGameEndMessage(s *discordgo.Session) {
 	guild.AmongUsData.SetAllAlive()
@@ -189,6 +189,7 @@ func editMessage(s *discordgo.Session, channelID string, messageID string, messa
 	if err != nil {
 		log.Println(err)
 	}
+
 	return msg
 }
 

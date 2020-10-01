@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/denverquane/amongusdiscord/discord"
@@ -56,11 +55,7 @@ func discordMainWrapper() error {
 	}
 
 	port := os.Getenv("SERVER_PORT")
-	num, err := strconv.Atoi(port)
-	if err != nil || num < 1000 || num > 9999 {
-		log.Printf("Invalid or no particular SERVER_PORT provided. Defaulting to %s\n", DefaultPort)
-		port = DefaultPort
-	}
+	log.Print("Setting port to: " + port);
 
 	//start the discord bot
 	discord.MakeAndStartBot(discordToken, port, emojiGuildID)

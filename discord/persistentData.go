@@ -12,6 +12,8 @@ type PersistentGuildData struct {
 
 	CommandPrefix         string `json:"commandPrefix"`
 	DefaultTrackedChannel string `json:"defaultTrackedChannel"`
+	PrivateCommandChannelId string `json:"privateCommandChannelId"`
+	VoiceChannelId string `json:""`
 
 	AdminUserIDs        []string   `json:"adminIDs"`
 	PermissionedRoleIDs []string   `json:"permissionRoleIDs"`

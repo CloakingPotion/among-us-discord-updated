@@ -3,9 +3,6 @@ package discord
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
-	"github.com/denverquane/amongusdiscord/game"
-	socketio "github.com/googollee/go-socket.io"
 	"log"
 	"net/http"
 	"os"
@@ -14,6 +11,10 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+
+	"github.com/bwmarrin/discordgo"
+	"github.com/denverquane/amongusdiscord/game"
+	socketio "github.com/googollee/go-socket.io"
 )
 
 // AllConns mapping of socket IDs to guild IDs
@@ -37,8 +38,8 @@ var SocketUpdateChannels = make(map[string]*chan SocketStatus)
 
 var ChannelsMapLock = sync.RWMutex{}
 
-//const privateChannelID = "758394408851734568"; // Currently named private in the server. Planning to change name to bot-commands in the future. Cloaking's Server
-const privateChannelID = "760606092643270679";
+const privateChannelID = "758394408851734568"; // Currently named private in the server. Planning to change name to bot-commands in the future. Cloaking's Server
+//const privateChannelID = "760606092643270679"
 
 type SocketStatus struct {
 	GuildID   string
@@ -345,7 +346,7 @@ func reactionCreate(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 			if socketGuild.GameStateMsg.Exists() && socketGuild.GameStateMsg.IsReactionTo(m) {
 				socketGuild.handleReactionGameStartAdd(s, m)
 			} else if m.ChannelID == privateChannelID {
-				socketGuild.handleReactionPrivateUserMessage(s, m);
+				socketGuild.handleReactionPrivateUserMessage(s, m)
 			}
 
 			break
@@ -375,9 +376,9 @@ func newGuild(emojiGuildID string) func(s *discordgo.Session, m *discordgo.Guild
 
 			LinkCode: m.Guild.ID,
 
-			UserData:     MakeUserDataSet(),
-			Tracking:     MakeTracking(),
-			GameStateMsg: MakeGameStateMessage(),
+			UserData:        MakeUserDataSet(),
+			Tracking:        MakeTracking(),
+			GameStateMsg:    MakeGameStateMessage(),
 			PrivateStateMsg: MakePrivateStateMessage(),
 
 			StatusEmojis:  emptyStatusEmojis(),
@@ -415,7 +416,6 @@ func newGuild(emojiGuildID string) func(s *discordgo.Session, m *discordgo.Guild
 
 	}
 }
-
 
 func (guild *GuildState) handleMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
@@ -546,7 +546,7 @@ func (guild *GuildState) handleMessageCreate(s *discordgo.Session, m *discordgo.
 				}
 				//}
 				guild.handleGameStartMessage(s, m, room, region, initialTracking)
-				guild.createPrivateMapMessage(s, m);
+				guild.createPrivateMapMessage(s, m)
 
 				break
 			case "end":
@@ -556,12 +556,12 @@ func (guild *GuildState) handleMessageCreate(s *discordgo.Session, m *discordgo.
 			case "endgame":
 				guild.handleGameEndMessage(s)
 
-				var pMessage = guild.PrivateStateMsg.message;
+				var pMessage = guild.PrivateStateMsg.message
 
 				//have to explicitly delete here, because if we use the default delete below, the channelID
 				//for the game state message doesn't exist anymore...
 				deleteMessage(s, m.ChannelID, m.Message.ID)
-				deleteMessage(s, pMessage.ChannelID, pMessage.ID);
+				deleteMessage(s, pMessage.ChannelID, pMessage.ID)
 				break
 			case "force":
 				fallthrough
